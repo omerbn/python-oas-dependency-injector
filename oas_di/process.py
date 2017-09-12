@@ -125,7 +125,7 @@ def _read_file(filename):
 
 def parse_model(text):
     global _models_folder
-    
+
     text = text.split('/')
     file_name = text[0][7:]
     type_name = text[1]
@@ -156,6 +156,7 @@ class RefFixer(object):
                         model = v.split('/')[2]
                         model_def = _files.get(_files_synonyms[filename]).get(model)
                         model_name = filename + "_" + model
+                        node[k] = "#/definitions/" + model_name
                     else:
                         model_name = None
 
