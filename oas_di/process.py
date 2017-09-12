@@ -12,12 +12,6 @@ _files_synonyms = {}
 def process_file(cmd_args):
     global _models_folder
 
-    fullpath = os.path.abspath(cmd_args.filename)
-    target_fullpath = fullpath + ".bak"
-
-    # making a backup
-    copyfile(fullpath, target_fullpath)
-
     # models folder
     if cmd_args.models_lib:
         import importlib
@@ -28,6 +22,13 @@ def process_file(cmd_args):
 
     # extracting content and refs
     file_json, refs = _read_file(cmd_args.filename)
+
+    if len(refs) == 0:
+        return
+
+    # creating a backup
+    fullpath = os.path.abspath(cmd_args.filename)
+    copyfile(fullpath, fullpath + ".bak")
 
     # processing files
     for filename in refs:
@@ -123,6 +124,8 @@ def _read_file(filename):
 
 
 def parse_model(text):
+    global _models_folder
+    
     text = text.split('/')
     file_name = text[0][7:]
     type_name = text[1]
@@ -137,22 +140,32 @@ class RefFixer(object):
         self._rec(json)
         return self.new_definitions
 
-    def _rec(self, node):
+    def _rec(self, node, filename=None):
         if isinstance(node, dict):
             for k, v in node.items():
-                if k == '$ref' and v.startswith("models:"):
-                    model_filename, filename, model = parse_model(v)
+                if k == '$ref':
+                    if v.startswith("models:"):
+                        model_filename, filename, model = parse_model(v)
 
-                    # getting model definition
-                    model_def = _files.get(_files_synonyms[filename]).get(model)
-                    model_name = filename + "_" + model
-                    node[k] = "#/definitions/" + model_name
+                        # getting model definition
+                        model_def = _files.get(_files_synonyms[filename]).get(model)
+                        model_name = filename + "_" + model
+                        node[k] = "#/definitions/" + model_name
+                    elif filename and v.startswith("#/definitions/"):
+                        # getting model definition
+                        model = v.split('/')[2]
+                        model_def = _files.get(_files_synonyms[filename]).get(model)
+                        model_name = filename + "_" + model
+                    else:
+                        model_name = None
 
-                    if model_name not in self.new_definitions:
+                    if model_name and model_name not in self.new_definitions:
                         self.new_definitions[model_name] = model_def
-                        self._rec(model_def)
+                        self._rec(model_def, filename)
+
+
                 else:
-                    self._rec(v)
+                    self._rec(v, filename)
         elif isinstance(node, list):
             for x in node:
-                self._rec(x)
+                self._rec(x, filename)
