@@ -7,7 +7,7 @@ Unifying multiple OAS definition files into 1 file, according to dependencies.
 
 __pip__:
 ```sh
-$ pip install https://github.com/omerbn/python-oas-dependency-injector.git
+$ pip install git+https://github.com/omerbn/python-oas-dependency-injector.git
 ```
 
 ### Usage
