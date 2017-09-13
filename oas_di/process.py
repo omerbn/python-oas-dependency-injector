@@ -1,4 +1,3 @@
-from shutil import copyfile
 import os
 import codecs
 import yaml
@@ -26,9 +25,11 @@ def process_file(cmd_args):
     if len(refs) == 0:
         return
 
-    # creating a backup
-    fullpath = os.path.abspath(cmd_args.filename)
-    copyfile(fullpath, fullpath + ".bak")
+    # target filename
+    if not cmd_args.target_filename:
+        source_filename = os.path.basename(cmd_args.filename)
+        tmp_target = source_filename[0:source_filename.rfind('.')] + "_pp" + source_filename[source_filename.rfind('.'):]
+        cmd_args.target_filename = cmd_args.filename.replace(source_filename, tmp_target)
 
     # processing files
     for filename in refs:
@@ -41,7 +42,7 @@ def process_file(cmd_args):
     file_json['definitions'] = {**file_json.get('definitions', {}), **new_desf}
 
     # saving file
-    with codecs.open(cmd_args.filename, 'w', 'utf-8') as f:
+    with codecs.open(cmd_args.target_filename, 'w', 'utf-8') as f:
         is_yaml = cmd_args.filename.endswith('.yml') or cmd_args.filename.endswith('.yaml')
         is_json = cmd_args.filename.endswith('.js') or cmd_args.filename.endswith('.json')
 
